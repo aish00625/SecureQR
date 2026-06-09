@@ -17,10 +17,16 @@ def extract_features(url):
     length = len(url)
 
     dots = url.count('.')
+    
+    hyphens = url.count('-')
+
+    digits = sum(c.isdigit() for c in url)
+
+    at_symbol = 1 if '@' in url else 0
 
     https = 1 if url.startswith("https") else 0
 
-    return [length, dots, https]
+    return [length, dots, hyphens, digits, at_symbol, https]
 
 
 # Upload and scan
