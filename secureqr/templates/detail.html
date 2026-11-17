@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Scan #{{ scan.id }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <p><a href="{{ url_for('pages.history_page') }}">Back to history</a></p>
+  <h1>Scan #{{ scan.id }}</h1>
+  <p>{{ scan.source|capitalize }} scan, <time datetime="{{ scan.created_at }}" data-local-time>{{ scan.created_at }}</time></p>
+</div>
+<div id="result" class="narrow"></div>
+<script type="application/json" id="scan-data">{{ scan.result|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/detail.js') }}"></script>{% endblock %}

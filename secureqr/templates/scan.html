@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Scan{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Scan</h1>
+  <p>Upload a QR image, use your camera, or paste a link. Nothing you scan is opened.</p>
+</div>
+<div class="scan-layout">
+  <section>
+    <div class="tabs" role="tablist" aria-label="Scan method">
+      <button class="tab" role="tab" id="tab-upload" aria-controls="pane-upload" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>Image</button>
+      <button class="tab" role="tab" id="tab-camera" aria-controls="pane-camera" aria-selected="false" tabindex="-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="13" r="3.5"/></svg>Camera</button>
+      <button class="tab" role="tab" id="tab-url" aria-controls="pane-url" aria-selected="false" tabindex="-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Link</button>
+    </div>
+
+    <div class="panel" role="tabpanel" id="pane-upload" aria-labelledby="tab-upload">
+      <label class="dropzone" id="dropzone" for="file-input" data-max-mb="{{ max_mb }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>
+        <strong>Drop a QR image here</strong>
+        <span class="muted small">or click to choose a file · {{ allowed|join(', ')|upper }} · up to {{ max_mb }} MB</span>
+        <input id="file-input" class="visually-hidden" type="file" accept=".png,.jpg,.jpeg,.webp,.bmp,image/png,image/jpeg,image/webp,image/bmp">
+      </label>
+      <div class="preview" id="preview">
+        <img id="preview-img" alt="Selected QR image preview">
+        <div class="field-row">
+          <button class="btn" id="upload-btn" type="button">Scan image</button>
+          <button class="btn btn-ghost" id="clear-btn" type="button">Choose another</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="pane-camera" aria-labelledby="tab-camera" hidden>
+      <div class="camera">
+        <video id="video" playsinline muted></video>
+        <div class="camera-frame" id="camera-frame" hidden></div>
+        <div class="camera-idle" id="camera-idle"><span>Camera is off. Your video stays on this device; only single frames are sent to the local server for decoding.</span></div>
+      </div>
+      <div class="camera-status"><span class="pulse" id="cam-pulse"></span><span id="cam-status">Camera off</span></div>
+      <div class="field-row mt-12">
+        <button class="btn" id="cam-start" type="button">Start camera</button>
+        <button class="btn btn-ghost" id="cam-stop" type="button" disabled>Stop</button>
+      </div>
+      <ul class="hint-list"><li>Hold the code inside the frame, about 15–25 cm away.</li><li>Scanning stops automatically when a code is found.</li></ul>
+    </div>
+
+    <div class="panel" role="tabpanel" id="pane-url" aria-labelledby="tab-url" hidden>
+      <form id="url-form" novalidate>
+        <label for="url-input" class="section-label">Link to check</label>
+        <input class="input mono" id="url-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" maxlength="2048" placeholder="https://example.com/account/verify">
+        <button class="btn btn-block mt-12" type="submit">Check link</button>
+      </form>
+      <p class="muted small mt-12">Use this for links copied from a QR code, SMS or e-mail. The link is analysed as text only.</p>
+    </div>
+  </section>
+
+  <section aria-live="polite" aria-label="Scan result" id="result">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+      <h3>No scan yet</h3>
+      <p class="small center">Results appear here with the ML verdict, every security warning and what to do next.</p>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/scan.js') }}"></script>{% endblock %}

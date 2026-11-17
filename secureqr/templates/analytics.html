@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Analytics</h1>
+  <p>Activity from your scan history, followed by how the model performed on held-out test data.</p>
+</div>
+
+<div class="grid grid-4" id="stat-cards">
+  <div class="stat"><div class="stat-label">Total scans</div><p class="stat-value" id="s-total">–</p></div>
+  <div class="stat"><div class="stat-label">High risk</div><p class="stat-value tone-high" id="s-high">–</p></div>
+  <div class="stat"><div class="stat-label">Medium risk</div><p class="stat-value tone-medium" id="s-medium">–</p></div>
+  <div class="stat"><div class="stat-label">Low risk</div><p class="stat-value tone-low" id="s-low">–</p></div>
+</div>
+
+<div class="grid grid-2 mt-20">
+  <section class="panel">
+    <div class="panel-title"><h3>Scans per day, last 14 days</h3>
+      <div class="legend"><span><i class="bg-high"></i>High</span><span><i class="bg-medium"></i>Medium</span><span><i class="bg-low"></i>Low</span></div></div>
+    <div id="daily-chart"><div class="loading"><span class="spinner"></span>Loading…</div></div>
+  </section>
+  <section class="panel">
+    <div class="panel-title"><h3>Most frequent warnings</h3></div>
+    <div id="findings-chart"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-title"><h3>Scan sources</h3></div>
+    <div id="source-chart"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-title"><h3>Most scanned domains</h3></div>
+    <div id="hosts-table"></div>
+  </section>
+</div>
+
+<h2 class="section-gap">Model evaluation</h2>
+{% if metrics and metrics.test_metrics %}
+{% set t = metrics.test_metrics %}{% set cm = metrics.confusion_matrix %}
+<p class="muted">{{ "{:,}".format(metrics.split.test) }} URLs held out from training. Model: {{ model.kind if model.loaded else metrics.chosen_model.kind }}, trained {{ metrics.trained_at[:10] }}.</p>
+<div class="grid grid-4">
+  <div class="stat"><div class="stat-label">Accuracy</div><p class="stat-value">{{ "%.2f"|format(t.accuracy*100) }}%</p></div>
+  <div class="stat"><div class="stat-label">Precision (phishing)</div><p class="stat-value">{{ "%.2f"|format(t.precision*100) }}%</p></div>
+  <div class="stat"><div class="stat-label">Recall (phishing)</div><p class="stat-value">{{ "%.2f"|format(t.recall*100) }}%</p></div>
+  <div class="stat"><div class="stat-label">F1-score</div><p class="stat-value">{{ "%.2f"|format(t.f1*100) }}%</p></div>
+</div>
+<div class="grid grid-2 mt-20">
+  <section class="panel">
+    <div class="panel-title"><h3>Confusion matrix</h3><span class="muted small">rows: actual · columns: predicted</span></div>
+    <div class="cm">
+      <div class="h"></div><div class="h">Legitimate</div><div class="h">Phishing</div>
+      <div class="h">Legitimate</div><div class="ok"><strong class="num">{{ "{:,}".format(cm.tn) }}</strong>correct</div><div class="bad"><strong class="num">{{ "{:,}".format(cm.fp) }}</strong>false alarms</div>
+      <div class="h">Phishing</div><div class="bad"><strong class="num">{{ "{:,}".format(cm.fn) }}</strong>missed</div><div class="ok"><strong class="num">{{ "{:,}".format(cm.tp) }}</strong>caught</div>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="panel-title"><h3>Before and after</h3></div>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Setup</th><th class="num">Accuracy</th><th class="num">Recall</th><th class="num">F1</th></tr></thead>
+      <tbody>
+      {% if metrics.legacy_baseline %}{% set b = metrics.legacy_baseline %}
+      <tr><td>Original: 6 features + LinearSVC</td><td class="num">{{ "%.2f"|format(b.accuracy*100) }}%</td><td class="num">{{ "%.2f"|format(b.recall*100) }}%</td><td class="num">{{ "%.2f"|format(b.f1*100) }}%</td></tr>{% endif %}
+      <tr><td>Current model, random split</td><td class="num">{{ "%.2f"|format(t.accuracy*100) }}%</td><td class="num">{{ "%.2f"|format(t.recall*100) }}%</td><td class="num">{{ "%.2f"|format(t.f1*100) }}%</td></tr>
+      {% if metrics.domain_grouped_test_metrics %}{% set g = metrics.domain_grouped_test_metrics %}
+      <tr><td>Current model, unseen domains</td><td class="num">{{ "%.2f"|format(g.accuracy*100) }}%</td><td class="num">{{ "%.2f"|format(g.recall*100) }}%</td><td class="num">{{ "%.2f"|format(g.f1*100) }}%</td></tr>{% endif %}
+      {% if metrics.cross_validation %}{% set cv = metrics.cross_validation %}
+      <tr><td>{{ cv.folds }}-fold cross-validation (mean)</td><td class="num">{{ "%.2f"|format(cv.accuracy.mean*100) }}%</td><td class="num">{{ "%.2f"|format(cv.recall.mean*100) }}%</td><td class="num">{{ "%.2f"|format(cv.f1.mean*100) }}%</td></tr>{% endif %}
+      </tbody>
+    </table>
+    </div>
+    <p class="muted small mt-12">"Unseen domains" means no registered domain in the test set appeared in training. It is the more realistic estimate for new phishing sites.</p>
+  </section>
+</div>
+{% else %}
+<div class="alert alert-info">No evaluation results found. Run <code>python -m secureqr.ml.train</code> to train the model and generate them.</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>{% endblock %}

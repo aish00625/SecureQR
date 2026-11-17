@@ -1,0 +1,4 @@
+# Optional: an extra QR decoding backend. SecureQR works without it (OpenCV
+# is used by default). On Windows pyzbar needs the Visual C++ 2013
+# redistributable; on Linux/macOS install the zbar system library.
+pyzbar>=0.1.9

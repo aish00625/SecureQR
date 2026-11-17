@@ -1,10 +1,41 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
 
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# Runtime data (scan history, logs, uploads)
+instance/
+logs/
+*.db
+*.sqlite3
 uploads/
 
-venv/
+# Local backups, release archives and scratch model output
+_backup/
+_release/
+*.zip
+tmp_model/
 
-.env
-
+# Editors / OS (shared VS Code config is committed)
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
 .ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+desktop.ini

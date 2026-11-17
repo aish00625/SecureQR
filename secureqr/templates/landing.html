@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}QR code phishing scanner{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>Check a QR code before it checks you.</h1>
+    <p class="hero-lede">SecureQR decodes QR codes from photos or your webcam and tells you whether the link inside looks like phishing. It never opens the link.</p>
+    <div class="hero-actions">
+      <a class="btn" href="{{ url_for('pages.scan_page') }}">Scan a QR code</a>
+      <a class="btn btn-ghost" href="{{ url_for('pages.about_page') }}">How it works</a>
+    </div>
+  </div>
+  <form class="try-panel" id="quick-form" novalidate>
+    <label for="quick-url">Paste a link to check it now</label>
+    <div class="field-row">
+      <input class="input mono" id="quick-url" name="url" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://example.com/login" maxlength="2048" required>
+      <button class="btn" type="submit">Check link</button>
+    </div>
+    <div class="try-examples" aria-label="Example links">
+      <button type="button" class="chip" data-url="https://en.wikipedia.org/wiki/QR_code">wikipedia.org</button>
+      <button type="button" class="chip" data-url="http://paypal.com.account-verify-login.xyz/webscr?cmd=_login">paypal look-alike</button>
+      <button type="button" class="chip" data-url="http://192.168.4.20:8080/kyc/update.php">IP + port</button>
+      <button type="button" class="chip" data-url="https://bit.ly/3xYzAbC">shortened link</button>
+    </div>
+  </form>
+</section>
+<div id="quick-result"></div>
+
+<section class="section-gap" aria-labelledby="layers-h">
+  <h2 id="layers-h">Three checks on every scan</h2>
+  <p class="muted">Each layer is reported separately, so you can see exactly why a link was flagged.</p>
+  <div class="layers">
+    <div class="layer"><h3><span class="layer-step">1</span>Decode</h3><p>OpenCV reads the QR code, including coloured and dotted designs, and identifies what it holds: a link, UPI payment, Wi-Fi login, phone number or text.</p></div>
+    <div class="layer"><h3><span class="layer-step">2</span>Classify</h3><p>A Linear SVM built from {{ "{:,}".format(metrics.dataset.rows_deduplicated) if metrics.dataset else "500,000+" }} unique labelled URLs scores the link using character patterns and 30 lexical features.</p></div>
+    <div class="layer"><h3><span class="layer-step">3</span>Explain</h3><p>Security rules check for IP hosts, shorteners, look-alike domains, dangerous schemes and more, then combine with the model into a low, medium or high risk level.</p></div>
+  </div>
+</section>
+
+{% if model.loaded and model.test_metrics %}
+<section class="section-gap facts" aria-label="Model results">
+  <div class="fact"><strong>{{ "%.1f"|format(model.test_metrics.accuracy * 100) }}%</strong><span>accuracy on {{ "{:,}".format(metrics.split.test) if metrics.split else "held-out" }} held-out URLs</span></div>
+  <div class="fact"><strong>{{ "%.1f"|format(model.test_metrics.recall * 100) }}%</strong><span>of phishing URLs caught (recall)</span></div>
+  <div class="fact"><strong>{{ "%.1f"|format(model.test_metrics.precision * 100) }}%</strong><span>of phishing alerts correct (precision)</span></div>
+  <div class="fact"><strong>0</strong><span>requests made to scanned links</span></div>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/landing.js') }}"></script>{% endblock %}

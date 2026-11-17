@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<div class="prose">
+  <div class="page-head">
+    <h1>About SecureQR</h1>
+    <p>QR codes hide their destination until you open them. That makes them a convenient lure for phishing ("quishing"): a sticker over a parking-meter code, a fake payment QR at a shop counter, a "verify your account" code in an e-mail that slips past link filters. SecureQR shows you what a code contains and how risky it looks before you act on it.</p>
+  </div>
+
+  <h2>How a scan works</h2>
+  <ol>
+    <li><strong>Validation.</strong> Uploads are checked for size, extension, file signature and pixel count, then decoded in memory. Nothing is written to disk.</li>
+    <li><strong>Decoding.</strong> OpenCV's QR detectors run on the image and, if needed, on enhanced versions (colour-channel thresholding and erosion) that recover stylised and dotted codes{% if 'pyzbar' in backends %}; pyzbar is also installed and runs first{% endif %}.</li>
+    <li><strong>Content type.</strong> The payload is classified: web link, UPI payment, Wi-Fi, phone, SMS, e-mail, contact or text. Only links go to the model.</li>
+    <li><strong>Machine learning.</strong> A Linear SVM scores the link from character 3–5-gram TF-IDF features and 30 hand-crafted lexical features. Probabilities come from sigmoid calibration.</li>
+    <li><strong>Security rules.</strong> Independent checks look for raw IP hosts, shorteners, '@' tricks, punycode, brand names outside the real domain, risky TLDs, dangerous schemes, executable downloads, redirects and missing HTTPS.</li>
+    <li><strong>Risk level.</strong> High if a critical rule fires, the rule score is 50 or more, or the model is at least 80% sure and a rule agrees. Medium if either signal is moderate. Low otherwise.</li>
+  </ol>
+
+  <h2>What it will not do</h2>
+  <ul>
+    <li>It never opens, fetches or resolves a scanned link, so a scan cannot trigger a download, tip off an attacker, or be abused to reach internal servers.</li>
+    <li>It does not know where a shortened link really leads. Treat shortened links with extra care.</li>
+    <li>It cannot see the page behind a link, so a brand-new phishing site on a clean-looking domain can still score low.</li>
+  </ul>
+
+  <h2>Model</h2>
+  {% if model.loaded %}
+  <p>Loaded: <code>{{ model.kind }}</code> v{{ model.version }}, trained {{ (model.trained_at or '')[:10] }}.
+  {% if metrics.dataset %}Training data: the Kaggle <em>phishing_site_urls</em> dataset, {{ "{:,}".format(metrics.dataset.rows_raw) }} rows, {{ "{:,}".format(metrics.dataset.rows_deduplicated) }} after removing duplicates.{% endif %}
+  Full results are on the <a href="{{ url_for('pages.analytics_page') }}">Analytics</a> page.</p>
+  {% else %}
+  <div class="alert alert-error">The model is not loaded: {{ model.error }}</div>
+  {% endif %}
+
+  <h2>Privacy and security</h2>
+  <ul>
+    <li>Scan history lives in a local SQLite database and can be cleared from the History page.</li>
+    <li>Webcam video never leaves your browser except as single still frames sent to this server for decoding; frames are not stored.</li>
+    <li>CSRF tokens on every state-changing request, per-IP rate limits, a strict Content Security Policy, parameterised SQL and auto-escaped output.</li>
+  </ul>
+</div>
+{% endblock %}

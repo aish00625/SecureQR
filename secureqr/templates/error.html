@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="empty-state error-box">
+  <h1>{{ code }}</h1>
+  <h3>{{ title }}</h3>
+  <p class="center mb-20">{{ message }}</p>
+  <a class="btn" href="{{ url_for('pages.scan_page') }}">Go to scanner</a>
+</div>
+{% endblock %}

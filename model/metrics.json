@@ -1,0 +1,231 @@
+{
+  "model_version": "2.0.0",
+  "trained_at": "2026-11-17T14:26:17+00:00",
+  "environment": {
+    "python": "3.13.18",
+    "sklearn": "1.9.1"
+  },
+  "random_seed": 42,
+  "quick_run": false,
+  "dataset": {
+    "rows_raw": 549346,
+    "label_counts_raw": {
+      "good": 392924,
+      "bad": 156422
+    },
+    "rows_deduplicated": 507195,
+    "duplicates_removed": 42151,
+    "label_counts_deduplicated": {
+      "good": 392897,
+      "bad": 114298
+    }
+  },
+  "legacy_baseline": {
+    "accuracy": 0.7753,
+    "precision": 0.8318,
+    "recall": 0.2618,
+    "f1": 0.3982,
+    "confusion_matrix": [
+      [
+        77018,
+        1652
+      ],
+      [
+        23032,
+        8168
+      ]
+    ]
+  },
+  "split": {
+    "train": 405756,
+    "test": 101439,
+    "strategy": "stratified 80/20 after de-duplication"
+  },
+  "model_comparison_validation": [
+    {
+      "model": "lexical_svm",
+      "C": 1.0,
+      "accuracy": 0.8801,
+      "precision": 0.8452,
+      "recall": 0.5728,
+      "f1": 0.6828,
+      "fit_seconds": 14.0
+    },
+    {
+      "model": "lexical_hgb",
+      "C": null,
+      "accuracy": 0.9396,
+      "precision": 0.9121,
+      "recall": 0.81,
+      "f1": 0.858,
+      "fit_seconds": 19.2
+    },
+    {
+      "model": "char_svm",
+      "C": 1.0,
+      "accuracy": 0.9818,
+      "precision": 0.979,
+      "recall": 0.9395,
+      "f1": 0.9588,
+      "fit_seconds": 21.9
+    },
+    {
+      "model": "combined_svm",
+      "C": 0.5,
+      "accuracy": 0.9831,
+      "precision": 0.9817,
+      "recall": 0.9425,
+      "f1": 0.9617,
+      "fit_seconds": 68.3
+    },
+    {
+      "model": "combined_svm",
+      "C": 1.0,
+      "accuracy": 0.9842,
+      "precision": 0.9817,
+      "recall": 0.9477,
+      "f1": 0.9644,
+      "fit_seconds": 80.5
+    },
+    {
+      "model": "combined_logreg",
+      "C": 0.5,
+      "accuracy": 0.9819,
+      "precision": 0.9792,
+      "recall": 0.9399,
+      "f1": 0.9591,
+      "fit_seconds": 154.6
+    }
+  ],
+  "chosen_model": {
+    "kind": "combined_svm",
+    "C": 1.0,
+    "selection_metric": "validation F1 (phishing class)"
+  },
+  "cross_validation": {
+    "folds": 5,
+    "accuracy": {
+      "mean": 0.9839,
+      "std": 0.0003
+    },
+    "precision": {
+      "mean": 0.9805,
+      "std": 0.0012
+    },
+    "recall": {
+      "mean": 0.9474,
+      "std": 0.0013
+    },
+    "f1": {
+      "mean": 0.9637,
+      "std": 0.0007
+    }
+  },
+  "test_metrics": {
+    "accuracy": 0.9849,
+    "precision": 0.9753,
+    "recall": 0.9574,
+    "f1": 0.9663,
+    "roc_auc": 0.997
+  },
+  "confusion_matrix": {
+    "labels": [
+      "legitimate",
+      "phishing"
+    ],
+    "matrix": [
+      [
+        78024,
+        555
+      ],
+      [
+        973,
+        21887
+      ]
+    ],
+    "tn": 78024,
+    "fp": 555,
+    "fn": 973,
+    "tp": 21887
+  },
+  "classification_report": {
+    "legitimate": {
+      "precision": 0.9876830765725281,
+      "recall": 0.9929370442484633,
+      "f1-score": 0.9903030918413972,
+      "support": 78579.0
+    },
+    "phishing": {
+      "precision": 0.9752695838160592,
+      "recall": 0.9574365704286965,
+      "f1-score": 0.9662708048209792,
+      "support": 22860.0
+    },
+    "accuracy": 0.9849367600232652,
+    "macro avg": {
+      "precision": 0.9814763301942937,
+      "recall": 0.9751868073385799,
+      "f1-score": 0.9782869483311882,
+      "support": 101439.0
+    },
+    "weighted avg": {
+      "precision": 0.9848856077053972,
+      "recall": 0.9849367600232652,
+      "f1-score": 0.9848872450636612,
+      "support": 101439.0
+    }
+  },
+  "domain_grouped_test_metrics": {
+    "accuracy": 0.9561,
+    "precision": 0.8996,
+    "recall": 0.9015,
+    "f1": 0.9005,
+    "train": 403127,
+    "test": 104068,
+    "unique_domains": 150716
+  },
+  "spot_checks": [
+    {
+      "url": "https://www.google.com/",
+      "phishing_probability": 0.0002
+    },
+    {
+      "url": "https://github.com/aish00625/SecureQR",
+      "phishing_probability": 0.8597
+    },
+    {
+      "url": "https://www.amazon.in/",
+      "phishing_probability": 0.1515
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/QR_code",
+      "phishing_probability": 0.0
+    },
+    {
+      "url": "https://www.nie.ac.in/",
+      "phishing_probability": 0.0044
+    },
+    {
+      "url": "https://www.sbi.co.in/",
+      "phishing_probability": 0.3036
+    },
+    {
+      "url": "http://paypal.com.account-verify-login.xyz/webscr?cmd=_login",
+      "phishing_probability": 1.0
+    },
+    {
+      "url": "http://192.168.10.5/secure/bank/login.php",
+      "phishing_probability": 1.0
+    },
+    {
+      "url": "http://free-gift-card-winner.top/claim-now.html",
+      "phishing_probability": 0.9831
+    },
+    {
+      "url": "https://bit.ly/3xYzAbC",
+      "phishing_probability": 0.9993
+    }
+  ],
+  "model_file_mb": 4.86,
+  "total_seconds": 1158.7
+}

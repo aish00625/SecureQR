@@ -1,116 +1,46 @@
+"""OpenCV webcam scanner (optional, terminal + preview window). Press ESC to quit.
+
+Run from the project root:  python -m desktop_app.webcam_qr_scanner
+The web app's Camera tab is the recommended way to scan with a webcam.
+"""
 import cv2
-from pyzbar.pyzbar import decode
-import joblib
 
-# Load trained model
-model = joblib.load("svm_model.pkl")
+from secureqr.config import Config
+from secureqr.core.analyzer import analyze_payload
+from secureqr.core.predictor import Predictor
+from secureqr.core.qr_decoder import decode_qr
 
-
-# Feature Extraction Function
-def extract_features(url):
-
-    length = len(url)
-
-    dots = url.count('.')
-
-    hyphens = url.count('-')
-
-    digits = sum(c.isdigit() for c in url)
-
-    at_symbol = 1 if '@' in url else 0
-
-    https = 1 if url.startswith('https') else 0
-
-    return [
-        length,
-        dots,
-        hyphens,
-        digits,
-        at_symbol,
-        https
-    ]
+COLORS = {"HIGH": (60, 60, 230), "MEDIUM": (0, 170, 240), "LOW": (110, 200, 50)}
 
 
-# Open Webcam
-cap = cv2.VideoCapture(0)
+def main():
+    predictor = Predictor(Config.MODEL_PATH)
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("Could not open the webcam.")
+        return
+    last, label = None, ""
+    print("Webcam started - press ESC to exit")
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            print("Failed to read from webcam")
+            break
+        res = decode_qr(frame, fast=True)
+        if res.found and res.payloads[0] != last:
+            last = res.payloads[0]
+            r = analyze_payload(last, predictor)
+            label = f"{r['risk_level']} RISK"
+            print(f"\nQR: {last}\nRisk: {r['risk_level']} | reasons: {'; '.join(r['risk_reasons'])}")
+        if label:
+            color = COLORS.get(label.split()[0], (255, 255, 255))
+            cv2.putText(frame, label, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
+        cv2.imshow("SecureQR webcam scanner", frame)
+        if cv2.waitKey(1) == 27:
+            break
+    cap.release()
+    cv2.destroyAllWindows()
 
-# Prevent same QR from being processed repeatedly
-last_url = ""
 
-print("Webcam Started...")
-print("Press ESC to Exit")
-
-while True:
-
-    ret, frame = cap.read()
-
-    if not ret:
-        print("Failed to access webcam")
-        break
-
-    qr_codes = decode(frame)
-
-    for qr in qr_codes:
-
-        url = qr.data.decode()
-
-        # Process only if new QR
-        if url != last_url:
-
-            last_url = url
-
-            print("\nQR Detected:")
-            print(url)
-
-            features = extract_features(url)
-
-            prediction = model.predict([features])
-
-            if prediction[0] == 0:
-
-                result = "SAFE"
-
-            else:
-
-                result = "PHISHING"
-
-            print("Prediction:", result)
-
-        # Draw rectangle around QR code
-        points = qr.polygon
-
-        if len(points) == 4:
-
-            pts = [(p.x, p.y) for p in points]
-
-            for i in range(4):
-
-                cv2.line(
-                    frame,
-                    pts[i],
-                    pts[(i + 1) % 4],
-                    (0, 255, 0),
-                    2
-                )
-
-            # Show result on frame
-            cv2.putText(
-                frame,
-                result if 'result' in locals() else "",
-                (pts[0][0], pts[0][1] - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                (0, 0, 255),
-                2
-            )
-
-    cv2.imshow("Secure QR Scanner", frame)
-
-    key = cv2.waitKey(1)
-
-    if key == 27:  # ESC key
-        break
-
-cap.release()
-
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="SecureQR scans QR codes and links for phishing using a Linear SVM model and explainable security heuristics.">
+  <title>{% block title %}SecureQR{% endblock %} · SecureQR</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body data-page="{{ page|default('') }}">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('pages.landing') }}">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 4 7v8c0 7.5 5.1 13.4 12 15 6.9-1.6 12-7.5 12-15V7L16 2Z" fill="#10233d" stroke="#22d3ee" stroke-width="1.6"/><rect x="10" y="10" width="5" height="5" rx="1" fill="#22d3ee"/><rect x="17" y="10" width="5" height="5" rx="1" fill="#3b82f6"/><rect x="10" y="17" width="5" height="5" rx="1" fill="#3b82f6"/><rect x="18" y="18" width="3" height="3" fill="#22d3ee"/></svg>
+        SecureQR
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav class="nav" id="site-nav" aria-label="Main">
+        <a href="{{ url_for('pages.scan_page') }}" {% if page == 'scan' %}aria-current="page"{% endif %}>Scan</a>
+        <a href="{{ url_for('pages.history_page') }}" {% if page == 'history' %}aria-current="page"{% endif %}>History</a>
+        <a href="{{ url_for('pages.analytics_page') }}" {% if page == 'analytics' %}aria-current="page"{% endif %}>Analytics</a>
+        <a href="{{ url_for('pages.about_page') }}" {% if page == 'about' %}aria-current="page"{% endif %}>About</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">{% block content %}{% endblock %}</main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>SecureQR v{{ app_version }}. Scanned links are never opened or fetched.</span>
+      <span>Results are risk estimates, not guarantees.</span>
+    </div>
+  </footer>
+  <div class="toast" role="status" aria-live="polite" id="toast"></div>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

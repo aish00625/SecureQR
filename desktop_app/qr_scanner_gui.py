@@ -1,155 +1,61 @@
+"""Minimal Tkinter desktop client for SecureQR (optional).
+
+Uses exactly the same decoder, heuristics and ML model as the web app.
+Run from the project root:  python -m desktop_app.qr_scanner_gui
+"""
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from pathlib import Path
 
-import cv2
-from pyzbar.pyzbar import decode
+from secureqr.config import Config
+from secureqr.core.analyzer import analyze_payload
+from secureqr.core.predictor import Predictor
+from secureqr.core.qr_decoder import ImageValidationError, decode_qr, validate_image_bytes
 
-import joblib
-
-
-# Load trained model
-model = joblib.load("svm_model.pkl")
-
-
-# Feature extraction
-def extract_features(url):
-
-    length = len(url)
-
-    dots = url.count('.')
-    
-    hyphens = url.count('-')
-
-    digits = sum(c.isdigit() for c in url)
-
-    at_symbol = 1 if '@' in url else 0
-
-    https = 1 if url.startswith("https") else 0
-
-    return [length, dots, hyphens, digits, at_symbol, https]
+predictor = Predictor(Config.MODEL_PATH)
+COLORS = {"HIGH": "#dc2626", "MEDIUM": "#d97706", "LOW": "#059669"}
 
 
-# Upload and scan
-def upload_qr():
-
-    file_path = filedialog.askopenfilename(
-        filetypes=[("Image Files", "*.png *.jpg *.jpeg *.webp")]
-    )
-
-    if not file_path:
+def scan_file():
+    path = filedialog.askopenfilename(filetypes=[("Images", "*.png *.jpg *.jpeg *.webp *.bmp")])
+    if not path:
         return
-
-    file_label.config(text=file_path)
-
-    image = cv2.imread(file_path)
-
-    qr_codes = decode(image)
-
-    if not qr_codes:
-
-        messagebox.showerror(
-            "Error",
-            "No QR Code Found"
-        )
-
+    file_label.config(text=path)
+    try:
+        img = validate_image_bytes(Path(path).read_bytes(), path, Config.ALLOWED_EXTENSIONS,
+                                   20 * 1024 * 1024, Config.MAX_IMAGE_PIXELS)
+    except ImageValidationError as exc:
+        messagebox.showerror("Invalid image", str(exc))
         return
-
-    url = qr_codes[0].data.decode()
-
-    url_label.config(text=url)
-
-    features = extract_features(url)
-
-    prediction = model.predict([features])
-
-    if prediction[0] == 0:
-
-        result_label.config(
-            text="SAFE"
-        )
-
-        messagebox.showinfo(
-            "Result",
-            "SAFE URL"
-        )
-
-    else:
-
-        result_label.config(
-            text="PHISHING"
-        )
-
-        messagebox.showwarning(
-            "Warning",
-            "PHISHING URL DETECTED!"
-        )
+    decoded = decode_qr(img)
+    if not decoded.found:
+        messagebox.showerror("No QR code", "No QR code was found in this image.")
+        return
+    r = analyze_payload(decoded.payloads[0], predictor)
+    content_label.config(text=r["url"] or r["raw_content"])
+    ml = r["ml"] or {}
+    ml_label.config(text=f"ML: {ml.get('label', 'n/a')} ({ml.get('phishing_probability', 0):.0%})"
+                    if ml.get("available") else "ML: not applicable")
+    heur = r["heuristics"]
+    heur_label.config(text=f"Rules: {heur['score']}/100, {len(heur['findings'])} warnings" if heur else "Rules: n/a")
+    risk_label.config(text=f"{r['risk_level']} RISK", fg=COLORS[r["risk_level"]])
 
 
-# Main window
 window = tk.Tk()
-
-window.title("Secure QR Scanner")
-
-window.geometry("700x400")
-
-
-heading = tk.Label(
-    window,
-    text="Secure QR Scanner",
-    font=("Arial", 18)
-)
-
-heading.pack(pady=10)
-
-
-upload_button = tk.Button(
-    window,
-    text="Upload QR",
-    command=upload_qr
-)
-
-upload_button.pack(pady=10)
-
-
-file_label = tk.Label(
-    window,
-    text="No file selected"
-)
-
+window.title("SecureQR")
+window.geometry("720x380")
+tk.Label(window, text="SecureQR", font=("Segoe UI", 18, "bold")).pack(pady=12)
+tk.Button(window, text="Open QR image…", command=scan_file).pack(pady=6)
+file_label = tk.Label(window, text="No file selected", fg="#64748b")
 file_label.pack()
+content_label = tk.Label(window, text="-", font=("Consolas", 11), wraplength=660)
+content_label.pack(pady=12)
+ml_label = tk.Label(window, text="")
+ml_label.pack()
+heur_label = tk.Label(window, text="")
+heur_label.pack()
+risk_label = tk.Label(window, text="", font=("Segoe UI", 16, "bold"))
+risk_label.pack(pady=12)
 
-
-url_title = tk.Label(
-    window,
-    text="Extracted URL:"
-)
-
-url_title.pack(pady=10)
-
-
-url_label = tk.Label(
-    window,
-    text="-"
-)
-
-url_label.pack()
-
-
-status_title = tk.Label(
-    window,
-    text="Status:"
-)
-
-status_title.pack(pady=10)
-
-
-result_label = tk.Label(
-    window,
-    text="-",
-    font=("Arial", 14)
-)
-
-result_label.pack()
-
-
-window.mainloop()
+if __name__ == "__main__":
+    window.mainloop()
